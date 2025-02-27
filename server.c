@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include<arpa/inet.h>
 #include<string.h>
+#include <sys/wait.h>
 #define PORT 5050
 #define MAX_TRY 5
 
@@ -37,30 +38,28 @@ void play(int client, char *word, int id){
         for(int i = 0; i < strlen(word); i++){
             if (word[i] == try[i] && clue[i] == '_'){
                 clue[i] = word[i];
-                correct = 1;
             }
         }
-        if(correct){
-            if(strcmp(clue, word) == 0) {
-                if(send(client,&correct, sizeof(int), 0) < 0){
-                    perror("Server : pb with the send of the end game : ");
-                }
-                break;
-            }else{
-                int incorrect = 0;
-                if(send(client,&incorrect, sizeof(int), 0) < 0){
-                    perror("Server : pb with the send of the end game : ");
-                }
+        if(strcmp(clue, word) == 0) {
+            correct = 1;
+            if(send(client,&correct, sizeof(int), 0) < 0){
+                perror("Server : pb with the send of the end game : ");
             }
-            if(send(client,clue, wordlen, 0) < 0){
-                perror("Server : pb with the send of the clue changed : ");
+            break;
+        }else{
+            if(send(client,&correct, sizeof(int), 0) < 0){
+                perror("Server : pb with the send of the end game : ");
             }
+        }
+        if(send(client,clue, wordlen, 0) < 0){
+            perror("Server : pb with the send of the clue changed : ");
         }
         tries --;
+    
         if(send(client,&tries, sizeof(int), 0) < 0){
             perror("Server : pb with the send of the number of tries");
         }
-        printf("Server : client %d has %d tries left \n", id, tries);
+        printf("Server : Client %d has %d tries left \n", id, tries);
         
     }
     close(client);
@@ -124,17 +123,18 @@ int main(){
     printf("Server : Player 2 word : %s\n",word2);
 
     pid_t pid = fork();
-
     if(pid == -1){
         perror("Server : error  in fork");
     }
     if(pid == 0){
         //Son process manages player 1
         play(player1_ds, word2, 1);
-        exit(EXIT_SUCCESS);
-    }else{
+    }
+    else{
         play(player2_ds,word1,2);
     }
+    int status;
+    waitpid(pid, &status, 0);  
     close(ds);
     return EXIT_SUCCESS;
 

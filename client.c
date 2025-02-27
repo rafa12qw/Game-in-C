@@ -66,7 +66,7 @@ int main(int argc, char  *argv[]) {
         char try[lenClue];
         printf("Client : Guess the word:\n %s \n",clue);
         fgets(try, lenClue, stdin);
-        word[strcspn(word, "\n")] = '\0';
+        try[strcspn(try, "\n")] = '\0';
         if(send(ds, try, lenClue,0) < 0){
             perror("Client : send of try ");
             exit(EXIT_FAILURE);
@@ -75,7 +75,6 @@ int main(int argc, char  *argv[]) {
             perror("Client : error receiving the status of the game :");
             exit(EXIT_FAILURE);
         };
-        printf("isCorrect %d \n", isCorrect);
         if(isCorrect == 1){
             printf("Congratulations, you have won \n");
             break;
